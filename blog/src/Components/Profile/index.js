@@ -1,86 +1,139 @@
-import React from 'react';
+import React from "react";
 import {
-    BrowserRouter as Router,
-    Switch,
-    Route,
-    Link,
-    useRouteMatch,
-    withRouter
-} from 'react-router-dom';
-import { Editor, EditorState, RichUtils, convertFromRaw } from 'draft-js';
-import './Profile.css';
-import postProfileVal from '../../Constants/profilePostConstants' ;
-import data from '../../Constants/initialiserUserData';
-import ProfilePost from '../ProfilePost';
-import Navbar2 from '../Navbar2';
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useRouteMatch,
+  withRouter
+} from "react-router-dom";
+import { Editor, EditorState, RichUtils, convertFromRaw } from "draft-js";
+import "./Profile.css";
+import postProfileVal from "../../Constants/profilePostConstants";
+import data from "../../Constants/initialiserUserData";
+import ProfilePost from "../ProfilePost";
+import Navbar2 from "../Navbar2";
 
-class Profile extends React.Component{
-  constructor(){
+class Profile extends React.Component {
+  constructor() {
     super();
-    this.state={
-    userData:data,
-    userPosts:[],
-    follow1 : 1
-    }
+    this.state = {
+      userData: {},
+      userPosts: [],
+      functionClick:()=>{},
+    };
   }
 
-  componentDidMount(){
-    this.sendUsername();
+  componentWillMount() {
+     this.sendUsername();
+     
   }
 
+  followerCheck = function(){
 
-  sendUsername = ()=>{
-    //let id = "localhost:5000/queryParams?id:"+this.props.match.params.userId
-    fetch('http://localhost:5000/userHeader?id='+ this.props.match.params.userId).then(response => {
-		  return response.json();
-		}).then(res => {
-      console.log(res[0])
-		  this.setState({
-      userData: res,
-      userPosts: res[0].postArr,
-      })
-		});
-  }
-
-  followerIncrease() {
-    this.setState(prevState => ({ 
-      follow1 : prevState.follow1+1 
-    }))
-    console.log(this.state.count)
-  }
-  render() {
-    console.log(this.state.userData);
-    let userValues = this.state.userData;
-      return (
+    fetch("http://ec2-54-159-137-67.compute-1.amazonaws.com:5000/users/isFollowed/"+this.state.userData._id)
+    .then(response => {
+      return response.json();
+    })
+    .then(res => {
+      console.log("xsxs"+res)
       
-        <div className="Profile">
-          <div className="userBox" >
-            <div className="userInfo">
-              <img className="userimage" src={this.state.userData[0].userPhoto} />
-              <div className="usercard">
-                <div className="userid">{this.state.userData[0].username}</div>
-                <div className="follow">
-                  <div className="following">
-                    <h4>Following</h4>{this.state.userData[0].following1}
-                  </div>
-                  <div className="followers">
-                    <h4>Followers</h4>{this.state.userData[0].follow1} 
-                  </div>
+    });
+  }
+    
+
+
+  followerDecrease = function(){
+
+    fetch("http://ec2-54-159-137-67.compute-1.amazonaws.com:5000/users/unfollow/"+this.state.userData._id)
+    .then(response => {
+      return response.json();
+    })
+    .then(res => {
+      console.log("csdcsd"+res)
+      
+    });
+  }
+
+
+
+  followerIncrease = function(){
+
+    fetch("http://ec2-54-159-137-67.compute-1.amazonaws.com:5000/users/follow/"+this.state.userData._id)
+    .then(response => {
+      return response.json();
+    })
+    .then(res => {
+      console.log(res)
+      
+    });
+  }
+  sendUsername = () => {
+      fetch("http://ec2-54-159-137-67.compute-1.amazonaws.com:5000/users/profile/" + this.props.match.params.userId)
+      .then(response => {
+        return response.json();
+      })
+      .then(
+        res => {
+         if(res.request.length===0)
+         {
+           window.location.replace('/NotFound');
+         }
+         return res;
+        }
+      )
+      .then(res => {
+        
+        this.setState({
+          userData: res.request[0],
+          userPosts:res.request[0].postArr
+        });
+        this.followerCheck();
+      });
+  };
+
+  render() {
+    return (
+      <div className="Profile">
+        <div className="userBox">
+          <div className="userInfo">
+            <img className="userimage" src={"http://ec2-54-159-137-67.compute-1.amazonaws.com:5000"+this.state.userData.userPhoto} />
+            <div className="usercard">
+              <div className="userid">{this.state.userData.username}</div>
+              <div className="follow">
+                <div className="following">
+                  <h4>Following</h4>
+                  {this.state.userData.following}
                 </div>
-                <button className="btn btn-sm btn-primary btn-block" onClick={()=>this.followerIncrease()} type="button">Follow</button>
-                <div className="descBox">
-                  <div className="userNameProf">{this.state.userData[0].name}</div>
-                  <div className="userDesc">{this.state.userData[0].description}</div>
+                <div className="followers">
+                  <h4>Followers</h4>
+                  {this.state.userData.followers}
+                </div>
+              </div>
+              <button
+                className="btn btn-sm btn-primary btn-block"
+                onClick={() => this.followerIncrease()}
+                type="button"
+              >
+                Follow
+              </button>
+              <div className="descBox">
+                <div className="userNameProf">{this.state.userData.name}</div>
+                <div className="userDesc">
+                  {this.state.userData.description}
                 </div>
               </div>
             </div>
-            <div className="posts">
-              {this.state.userPosts.map((item) => {return (<ProfilePost {...item} /> )})}
-            </div>
-            <div className="end"> That's all folks.</div>
-          </div>  
+          </div>
+          <div className="posts">
+            {this.state.userPosts.map(item => {
+              return <ProfilePost {...item} />;
+            })}
+          </div>
+          <div className="end"> That's all folks.</div>
         </div>
-      )
-    }
+      </div>
+    );
+  }
 }
 export default withRouter(Profile);

@@ -12,20 +12,19 @@ import './HomePost.css';
 class HomePost extends React.Component{
     
     render() {
-      const link1 = '/post/'+this.props.id;
-      const link2 = '/user/'+this.props.username;
+      const link1 = '/posts/'+this.props._id;
+      const link2 = '/users/profile/'+this.props.userId['username'];
       return (      
         <div className="postOuter">  
           <div className="homePost" >
             <Link className="linkHomeUser" exact to={link2}>
               <div className="postHead">      
-                <img className="userImg" src={this.props.imgUrl}/>
-                <div className="userName">{this.props.username}</div>
+                <div className="userName">{this.props.userId['username']}</div>
               </div>
             </Link>
             <Link className="linkHomePost" exact to={link1}>
               <div className="postBody">
-                < img className="postImg" src={this.props.thumbnail}/>
+                < img className="postImg" src={'http://ec2-54-159-137-67.compute-1.amazonaws.com:5000'+this.props.thumbnail}/>
               </div>
               <div className="postBottom">
                 <div className="postTitleHome">{this.props.title}</div>

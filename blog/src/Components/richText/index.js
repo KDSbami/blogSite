@@ -6,22 +6,25 @@ import abc from '../../Constants/test'
 export default class RichEditor extends Component {
   constructor(props) {
     super(props);
-    this.state = { editorState: EditorState.createEmpty()
+    this.state = { editorState: EditorState.createEmpty(),
+      publishFlag: true
                 };
+                
     this.focus = () => this.refs.editor.focus();
     this.onChange = (editorState) => this.setState({editorState});
     this.handleKeyCommand = (command) => this._handleKeyCommand(command);
     this.onTab = (e) => this._onTab(e);
     this.toggleBlockType = (type) => this._toggleBlockType(type);
     this.toggleInlineStyle = (style) => this._toggleInlineStyle(style);
+
     this.publishEvent=()=>{
         const item = convertToRaw(this.state.editorState.getCurrentContent());
         console.log(JSON.stringify(item));
         document.getElementById("afterPublish").style.display = "flex";
         document.getElementById("afterPublish").style.flexDirection = "column";
-
-
     };
+
+    this.handleClick1 = this.handleClick1.bind(this);
   }
 
   _handleSubmit(e) {
@@ -70,6 +73,11 @@ export default class RichEditor extends Component {
     this.onChange(RichUtils.toggleInlineStyle(this.state.editorState, inlineStyle));
   }
 
+  
+  handleClick1=()=>{
+    this.setState(state=>({publishFlag:!state.publishFlag}));
+}
+
   render() {
     let {imagePreviewUrl} = this.state;
         let $imagePreview = null;
@@ -88,9 +96,13 @@ export default class RichEditor extends Component {
       if (contentState.getBlockMap().first().getType() !== 'unstyled') {
         className += ' RichEditor-hidePlaceholder';
       }
-    }
+    } 
     return (
-      <div className="boundingBox">
+      <div>
+        <div value={this.state.publishFlag}/>
+          {this.state.publishFlag &&  <div className="boundingBox">
+        
+      
         
         <div className="containerEditor">
         <div className="options">
@@ -104,7 +116,7 @@ export default class RichEditor extends Component {
                 onToggle={this.toggleInlineStyle}
             />
             </div>
-            <div className="publish" onClick={this.publishEvent}>Publish</div>
+            <div className="publish" onClick={this.handleClick1}>Publish</div>
           </div>
           <div className={className} onClick={this.focus}>
             <Editor
@@ -120,19 +132,26 @@ export default class RichEditor extends Component {
             />
           </div>
        </div>
-       <div id="afterPublish">
-          <label for="inputTitle" name ="title" className="sr-only">Title</label>
-          <input type="text"  name="inputTitle" id="inputTitle" className="form-control" placeholder="Title" autofocus />
-          <label for="inputDesc" name ="desc" className="sr-only">Description</label>
-          <textarea name="inputDesc" id="inputDesc" className="form-control" placeholder="Description" autofocus />
+       </div>}
+       {
+         !this.state.publishFlag && 
+       <div id="afterPublish" className="login-page">
+         <div className="form">
+       <form onSubmit={this._addPost} className="register-form">
+          
+          <input type="text" ref="title" placeholder="Title" autofocus />
+          <br/>
+          <textarea ref="description" placeholder="Description" autofocus />
           
           <div className="postPreviewComponent">
-           <center><form onSubmit={(e)=>this._handleSubmit(e)}>
+           <center>
               <input className="postFileInput" 
                 type="file" 
-                onChange={(e)=>this._handleImageChange(e)} />
-            </form>
-            <div className="postImgPreview">
+                onChange={(e)=>this._handleImageChange(e)} 
+                ref = "thumbnail"
+                />
+            
+            <div className="postImgPreview"> 
               {$imagePreview}
             </div>
             <br/>
@@ -140,15 +159,55 @@ export default class RichEditor extends Component {
                 type="submit" 
                 onClick={(e)=>this._handleSubmit(e)}>Upload Image</button>
                 <br/><br/>
-                <button className="doneButton"type="submit">POST</button>
+                <button className="doneButton" type="submit">POST</button>
                 </center>
           </div>
-          
+          </form>
+          </div>
           </div>
           
+       
+  }
        </div>
     );
   }
+
+  
+  _addPost = (event) => {
+    event.preventDefault();
+    let item = convertToRaw(this.state.editorState.getCurrentContent());
+        item = JSON.stringify(item);
+        console.log(this.state.file)
+    
+      let title= this.refs.title.value;
+      let description= this.refs.description.value;
+      
+      let data = new FormData()
+   data.append('thumbnail', this.state.file)
+   data.append('title', title)
+   data.append('description', description)
+   data.append('content', item)
+   data.append('userId', '5e354083f43ca18ac1df9e09')
+  
+  fetch('http://ec2-54-159-137-67.compute-1.amazonaws.com:5000/posts/add', {
+    method:'POST',
+    body:data,
+    headers: {
+      'Authorization' : 'Bearer ' + localStorage.getItem('token'),
+    },
+    
+   
+    
+  })
+  .then(res => {
+
+    console.log(`Post added successfully: ${res}`)
+              window.location.replace('/home')
+  })
+  .catch(err => {
+    console.log(err);
+  })
+}
 }
 // Custom overrides for "code" style.
 const styleMap = {
